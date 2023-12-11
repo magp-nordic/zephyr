@@ -14,7 +14,8 @@ config CLOCK_CONTROL
 	default y
 
 config NRF_RTC_TIMER
-	default y
+	default y if SOC_SERIES_NRF51X || SOC_SERIES_NRF52X || \
+		    		SOC_SERIES_NRF53X || SOC_SERIES_NRF91X
 
 endif # SYS_CLOCK_EXISTS
 
