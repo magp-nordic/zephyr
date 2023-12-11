@@ -1,0 +1,24 @@
+# Nordic Semiconductor nRF54L MCU line
+
+# Copyright (c) 2024 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_NRF54LX
+	bool "Nordic Semiconductor nRF54L series MCU"
+	select SOC_PLATFORM_NRF54L
+	select HAS_NRFX
+	select HAS_NORDIC_DRIVERS
+	select HAS_SEGGER_RTT if ZEPHYR_SEGGER_MODULE
+	select SOC_FAMILY_NRF
+	help
+	  Enable support for nRF54L MCU series
+
+if SOC_SERIES_NRF54LX
+
+config SOC_PLATFORM_NRF54L
+	bool "Nordic Semiconductor nrf54l platform"
+	select SOC_FAMILY_NRF
+	help
+	  Enable support for MCU series derived from the nrf54l platform.
+
+endif # SOC_SERIES_NRF54LX

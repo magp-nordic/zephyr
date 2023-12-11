@@ -1,0 +1,118 @@
+# Nordic Semiconductor nRF54 MCU line
+
+# Copyright (c) 2024 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_SERIES_NRF54LX
+
+config SOC_NRF54L15
+	bool "NRF54L15"
+
+config SOC_NRF54L15_ENGA
+	select SOC_NRF54L15
+	bool "NRF54L15 ENGA"
+
+config SOC_NRF54L15_ENGA_CPUAPP
+	select ARM
+	select ARMV8_M_DSP
+	select CPU_CORTEX_M33
+	select CPU_HAS_ARM_MPU
+	select CPU_HAS_ICACHE
+	select CPU_HAS_ARM_SAU
+	select CPU_HAS_FPU
+	select HAS_HW_NRF_RADIO_IEEE802154
+	select HAS_POWEROFF
+	select SOC_NRF54L15_ENGA
+	bool "NRF54L15 ENGA CPUAPP"
+
+choice SOC_LFXO_LOAD_CAPACITANCE
+	prompt "LFXO load capacitance"
+	default SOC_LFXO_CAP_DEFAULT
+
+config SOC_LFXO_CAP_DEFAULT
+	bool "SoC default"
+	help
+	  When this option is used, the SoC initialization routine does not
+	  touch the XOSC32KCAPS register value, so the default setting for
+	  the SoC is in effect. Please note that this may not necessarily be
+	  the reset value (0) for the register, as the register can be set
+	  during the device trimming in the SystemInit() function.
+
+config SOC_LFXO_CAP_EXTERNAL
+	bool "Use external load capacitors for LFXO"
+
+config SOC_LFXO_CAP_INTERNAL
+	bool "Use internal load capacitors for LFXO"
+
+endchoice
+
+config SOC_LFXO_CAP_INT_VALUE_X2
+	int "Doubled value of LFXO internal load capacitors (in pF)"
+	depends on SOC_LFXO_CAP_INTERNAL
+	range 8 36
+	help
+	  Internal capacitors ranging from 4.0 pF to 18.0 pF in 0.5 pF steps
+	  can be enabled on pins XL1 and XL2. This option specifies doubled
+	  capacitance value for the two capacitors. Set it to 8 to get 4.0 pF
+	  for each capacitor, 9 to get 4.5 pF, and so on.
+
+choice SOC_HFXO_LOAD_CAPACITANCE
+	prompt "HFXO load capacitance"
+	default SOC_HFXO_CAP_DEFAULT
+
+config SOC_HFXO_CAP_DEFAULT
+	bool "SoC default"
+	help
+	  When this option is used, the SoC initialization routine does not
+	  touch the XOSC32MCAPS register value, so the default setting for
+	  the SoC is in effect. Please note that this may not necessarily be
+	  the reset value (0) for the register, as the register can be set
+	  during the device trimming in the SystemInit() function.
+
+config SOC_HFXO_CAP_EXTERNAL
+	bool "Use external load capacitors for HFXO"
+
+config SOC_HFXO_CAP_INTERNAL
+	bool "Use internal load capacitors for HFXO"
+
+endchoice
+
+config SOC_HFXO_CAP_INT_VALUE_X4
+	int "Fourfold value of HFXO internal load capacitors (in pF)"
+	depends on SOC_HFXO_CAP_INTERNAL
+	range 16 68
+	help
+	  Internal capacitors ranging from 4.0 pF to 17.0 pF in 0.25 pF steps
+	  can be enabled on pins XC1 and XC2. This option specifies fourfold
+	  capacitance value for the two capacitors. Set it to 16 to get 4.0 pF
+	  for each capacitor, 17 to get 4.25 pF, and so on.
+
+config SOC_NRF54L_VREG_MAIN_DCDC
+	bool "Enable nRF54L DC/DC converter."
+	help
+	  To enable, an inductor must be connected to the DC/DC converter pin.
+
+config SOC_NRF54L_NORMAL_VOLTAGE_MODE
+	bool "Enable nRF54L Normal Voltage Mode."
+
+config SOC_NRF54L_GLITCHDET_WORKAROUND
+	bool "Enable workaround that disables glitch detector"
+	default y
+	help
+	  Temporary workaround - disabling glitch detector to limit power consumption.
+
+if NRF_GRTC_TIMER
+
+config ELV_GRTC_LFXO_ALLOWED
+	bool "Allow ELV mode when GRTC operates with LFXO source [EXPERIMENTAL]"
+	depends on NRF_GRTC_SLEEP_ALLOWED
+	select EXPERIMENTAL
+	help
+	  This featue allows using ELV mode when GRTC operates with the LFXO as
+	  a low-frequency clock source. The LFXO is automatically activated when
+	  preparing to system-off.
+	  WARNING! This feature is EXPERIMENTAL and may brick your device!
+
+endif # NRF_GRTC_TIMER
+
+endif # SOC_SERIES_NRF54LX

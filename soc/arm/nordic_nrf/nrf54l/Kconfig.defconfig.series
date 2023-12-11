@@ -1,0 +1,33 @@
+# Nordic Semiconductor nRF54L MCU line
+
+# Copyright (c) 2024 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_SERIES_NRF54LX
+
+rsource "Kconfig.defconfig.nrf54l*"
+
+config SOC_SERIES
+	default "nrf54l"
+
+config CORTEX_M_SYSTICK
+	default !NRF_GRTC_TIMER
+
+config CACHE_NRFX_CACHE
+	default y if EXTERNAL_CACHE
+
+config SOC_NRF54LX_SKIP_CLOCK_CONFIG
+	bool "Skip clock frequency configuration in system initialization"
+	help
+	  With this option, the CPU clock frequency is not set during system initialization.
+	  The CPU runs with the default, hardware-selected frequency.
+
+config SOC_NRF_FORCE_CONSTLAT
+	bool "Force constant-latency mode"
+	help
+	  In constant latency mode the CPU wakeup latency and the PPI task response
+	  will be constant and kept at a minimum. This is secured by forcing a set
+	  of base resources on while in sleep. The advantage of having a constant
+	  and predictable latency will be at the cost of having increased power consumption.
+
+endif # SOC_SERIES_NRF54LX
