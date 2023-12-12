@@ -16,23 +16,14 @@
  */
 #define _ISR_OFFSET 0
 
-#if defined(CONFIG_SOC_SERIES_NRF51X) || defined(CONFIG_SOC_SERIES_NRF52X)
-/* The customized solution for nRF51X-based and nRF52X-based
- * platforms requires that the POWER_CLOCK_IRQn line equals 0.
- */
-BUILD_ASSERT(POWER_CLOCK_IRQn == 0,
-	"POWER_CLOCK_IRQn != 0. Consider rework manual vector table.");
-
-/* The customized solution for nRF51X-based and nRF52X-based
- * platforms requires that the RTC1 IRQ line equals 17.
- */
-BUILD_ASSERT(RTC1_IRQn == 17,
-	     "RTC1_IRQn != 17. Consider rework manual vector table.");
-
+#if defined(CONFIG_SOC_FAMILY_NRF)
 #undef _ISR_OFFSET
+#if defined(CONFIG_SOC_SERIES_NRF51X) || defined(CONFIG_SOC_SERIES_NRF52X) || \
+    defined(CONFIG_SOC_SERIES_NRF53X) || defined(CONFIG_SOC_SERIES_NRF91X)
+
 #if !defined(CONFIG_BOARD_QEMU_CORTEX_M0)
 /* Interrupt line 0 is used by POWER_CLOCK */
-#define _ISR_OFFSET 1
+#define _ISR_OFFSET TIMER0_IRQn
 #else
 /* The customized solution for nRF51-based QEMU Cortex-M0 platform
  * requires that the TIMER0 IRQ line equals 8.
@@ -43,38 +34,38 @@ BUILD_ASSERT(TIMER0_IRQn == 8,
  * in QEMU Cortex M0.
  */
 #define _ISR_OFFSET 9
-
 #endif
 
-#elif defined(CONFIG_SOC_SERIES_NRF53X) || defined(CONFIG_SOC_SERIES_NRF91X)
-/* The customized solution for nRF91X-based and nRF53X-based
- * platforms requires that the POWER_CLOCK_IRQn line equals 5.
- */
-BUILD_ASSERT(CLOCK_POWER_IRQn == 5,
-	     "POWER_CLOCK_IRQn != 5."
-	     "Consider rework manual vector table.");
+#elif defined(CONFIG_SOC_PLATFORM_NRF54L)
+#define _ISR_OFFSET 28
+#endif /* CONFIG_SOC_PLATFORM_NRF54L */
+#endif /* CONFIG_SOC_FAMILY_NRF */
 
-#if !defined(CONFIG_SOC_NRF5340_CPUNET)
-/* The customized solution for nRF91X-based platforms
- * requires that the RTC1 IRQ line equals 21.
- */
-BUILD_ASSERT(RTC1_IRQn == 21,
-	     "RTC1_IRQn != 21. Consider rework manual vector table.");
+/* Get interrupt number of serial used as zephyr console */
+#define ZEPHYR_CONSOLE_IRQ_NUM DT_IRQN(DT_CHOSEN(zephyr_console))
 
-#else /* CONFIG_SOC_NRF5340_CPUNET */
-/* The customized solution for nRF5340_CPUNET
- * requires that the RTC1 IRQ line equals 22.
- */
-BUILD_ASSERT(RTC1_IRQn == 22,
-	     "RTC1_IRQn != 22. Consider rework manual vector table.");
+#if defined(CONFIG_UART_NRFX_LEGACY_SHIM)
+#include <zephyr/device.h>
+extern void uarte_nrfx_isr_int(void *);
+
+/* Interrupt Service Routine needed to handle incoming UARTE_ENDTX event */
+void uarte_isr(void)
+{
+	/* Macro for extracting address of UART used by zephyr */
+	const struct device *uart_console_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
+
+	uarte_nrfx_isr_int((void *)uart_console_dev);
+}
+#define CONSOLE_UART_IRQ_HANDLER uarte_isr
+#else
+#if defined(CONFIG_SOC_PLATFORM_NRF54L)
+extern void nrfx_uarte_20_irq_handler(void);
+#define CONSOLE_UART_IRQ_HANDLER nrfx_uarte_20_irq_handler
+#else
+extern void nrfx_uarte_0_irq_handler(void);
+#define CONSOLE_UART_IRQ_HANDLER nrfx_uarte_0_irq_handler
 #endif
-#undef _ISR_OFFSET
-/* Interrupt lines 8-10 is the first set of consecutive interrupts implemented
- * in nRF9160 SOC.
- */
-#define _ISR_OFFSET 8
-
-#endif /* CONFIG_SOC_SERIES_NRF52X */
+#endif
 
 
 struct k_sem sem[3];
@@ -188,33 +179,35 @@ void nrfx_power_clock_irq_handler(void);
 #if defined(CONFIG_BOARD_QEMU_CORTEX_M0)
 void timer0_nrf_isr(void);
 vth __irq_vector_table _irq_vector_table[] = {
-	nrfx_power_clock_irq_handler, 0, 0, 0, 0, 0, 0, 0,
-	timer0_nrf_isr, isr0, isr1, isr2
+	[POWER_CLOCK_IRQn]nrfx_power_clock_irq_handler,
+	[TIMER0_IRQn]timer0_nrf_isr,
+	[_ISR_OFFSET]isr0, isr1, isr2
 };
 #else
 vth __irq_vector_table _irq_vector_table[] = {
-	nrfx_power_clock_irq_handler,
-	isr0, isr1, isr2,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	rtc_nrf_isr
+	[POWER_CLOCK_IRQn]nrfx_power_clock_irq_handler,
+	[_ISR_OFFSET]isr0, isr1, isr2,
+	[RTC1_IRQn]rtc_nrf_isr,
+	[ZEPHYR_CONSOLE_IRQ_NUM]CONSOLE_UART_IRQ_HANDLER,
 };
 #endif /* CONFIG_BOARD_QEMU_CORTEX_M0 */
 #elif defined(CONFIG_SOC_SERIES_NRF53X) || defined(CONFIG_SOC_SERIES_NRF91X)
-#ifndef CONFIG_SOC_NRF5340_CPUNET
 vth __irq_vector_table _irq_vector_table[] = {
-	0, 0, 0, 0, 0, nrfx_power_clock_irq_handler, 0, 0,
-	isr0, isr1, isr2,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	rtc_nrf_isr
+	[CLOCK_POWER_IRQn]nrfx_power_clock_irq_handler,
+	[_ISR_OFFSET]isr0, isr1, isr2,
+	[RTC1_IRQn]rtc_nrf_isr,
+	[ZEPHYR_CONSOLE_IRQ_NUM]CONSOLE_UART_IRQ_HANDLER,
 };
-#else
+#elif defined(CONFIG_SOC_PLATFORM_NRF54L)
+void nrfx_grtc_irq_handler(void);
 vth __irq_vector_table _irq_vector_table[] = {
-	0, 0, 0, 0, 0, nrfx_power_clock_irq_handler, 0, 0,
-	isr0, isr1, isr2,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	rtc_nrf_isr
-};
+	[CLOCK_POWER_IRQn]nrfx_power_clock_irq_handler,
+	[_ISR_OFFSET]isr0, isr1, isr2,
+#if defined(CONFIG_NRF_GRTC_TIMER)
+	[GRTC_0_IRQn]nrfx_grtc_irq_handler,
 #endif
+	[ZEPHYR_CONSOLE_IRQ_NUM]CONSOLE_UART_IRQ_HANDLER,
+};
 #endif
 #elif defined(CONFIG_SOC_SERIES_CC13X2_CC26X2) || defined(CONFIG_SOC_SERIES_CC13X2X7_CC26X2X7)
 /* TI CC13x2/CC26x2 based platforms also employ a Hardware RTC peripheral
