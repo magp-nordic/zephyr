@@ -221,6 +221,8 @@ CHECK_DT_REG(vmc, NRF_VMC);
 CHECK_DT_REG(wdt, NRF_WDT0);	/* this should be the same node as wdt0 */
 CHECK_DT_REG(wdt0, NRF_WDT0);
 CHECK_DT_REG(wdt1, NRF_WDT1);
+CHECK_DT_REG(wdt30, NRF_WDT30);
+CHECK_DT_REG(wdt31, NRF_WDT31);
 
 /* nRF51/nRF52-specific addresses */
 #if defined(CONFIG_SOC_SERIES_NRF51X) || defined(CONFIG_SOC_SERIES_NRF52X)
