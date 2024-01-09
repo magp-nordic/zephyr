@@ -1,0 +1,31 @@
+#
+# Copyright (c) 2022 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+description: Nordic Split Channels
+
+properties:
+    owned-channels:
+      type: array
+      required: true
+      description: |
+        List of channels in a split-ownership peripheral that are to be owned
+        for use by the compiled CPU.
+
+    nonsecure-channels:
+      type: array
+      description: |
+        List of channels in a split-ownership, split-security peripheral that
+        are to be configured as nonsecure. In Trustzone systems, this property
+        is only evaluated for secure peripherals, as nonsecure channels are
+        implicitly specified through the owned-channels property. This property
+        is ignored in non-Trustzone systems.
+
+    child-owned-channels:
+      type: array
+      description: |
+        List of channels in a split-ownership peripheral that are officially
+        owned by the compiled CPU but intended to be used by its child
+        subprocessor(s).
