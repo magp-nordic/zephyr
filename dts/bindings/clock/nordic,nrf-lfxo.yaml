@@ -14,14 +14,12 @@ properties:
   load-capacitors:
     type: string
     enum:
-      - "default"
       - "internal"
       - "external"
-    required: true
     description: |
-      Type of load capacitors connected to the crystal. Please note that
-      "default" may not necessarily imply the reset value, as the choice may be
-      adjusted when the device trimming happens during system initialization.
+      Type of load capacitors connected to the crystal. If not specified,
+      adjustments may still happen when the device trimming happens during
+      system initialization.
 
   load-capacitance-femtofarad:
     type: int

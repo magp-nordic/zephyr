@@ -33,6 +33,14 @@
 		};
 	};
 
+	clocks {
+		lfxo: lfxo {
+			compatible = "nordic,nrf-lfxo";
+			#clock-cells = <0>;
+			clock-frequency = <32768>;
+		};
+	};
+
 	soc {
 		uicr: uicr@ffd000 {
 			compatible = "nordic,nrf-uicr";
