@@ -39,6 +39,12 @@
 			#clock-cells = <0>;
 			clock-frequency = <32768>;
 		};
+
+		hfxo: hfxo {
+			compatible = "nordic,nrf-hfxo";
+			#clock-cells = <0>;
+			clock-frequency = <32000000>;
+		};
 	};
 
 	soc {
