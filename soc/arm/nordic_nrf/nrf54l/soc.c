@@ -34,6 +34,7 @@
 LOG_MODULE_REGISTER(soc, CONFIG_SOC_LOG_LEVEL);
 
 #define LFXO_NODE DT_NODELABEL(lfxo)
+#define HFXO_NODE DT_NODELABEL(hfxo)
 
 static int nordicsemi_nrf54l_init(void)
 {
@@ -81,7 +82,7 @@ static int nordicsemi_nrf54l_init(void)
 	nrf_oscillators_lfxo_cap_set(NRF_OSCILLATORS, (nrf_oscillators_lfxo_cap_t)0);
 #endif
 
-#if defined(CONFIG_SOC_HFXO_CAP_INTERNAL)
+#if DT_ENUM_HAS_VALUE(HFXO_NODE, load_capacitors, internal)
 	uint32_t xosc32mtrim = NRF_FICR->XOSC32MTRIM;
 	/* The SLOPE field is in the two's complement form, hence this special
 	 * handling. Ideally, it would result in just one SBFX instruction for
@@ -104,14 +105,13 @@ static int nordicsemi_nrf54l_init(void)
 	 * holding any value between 4.0 pF and 17.0 pF in 0.25 pF steps.
 	 */
 	uint32_t capvalue =
-		(((CONFIG_SOC_HFXO_CAP_INT_VALUE_X4 - 22UL) * (uint32_t)(slope_m + 791) / 4UL) +
-		 (offset_m << 2UL)) >>
-		8UL;
+		(((((DT_PROP(HFXO_NODE, load_capacitance_femtofarad) * 4UL) / 1000UL) - 22UL) *
+		  (uint32_t)(slope_m + 791) / 4UL) + (offset_m << 2UL)) >> 8UL;
 
 	nrf_oscillators_hfxo_cap_set(NRF_OSCILLATORS, true, capvalue);
-#elif defined(CONFIG_SOC_HFXO_CAP_EXTERNAL)
+#elif DT_ENUM_HAS_VALUE(HFXO_NODE, load_capacitors, external)
 	nrf_oscillators_hfxo_cap_set(NRF_OSCILLATORS, false, 0);
-#endif /* CONFIG_SOC_HFXO_CAP_INTERNAL */
+#endif
 
 	if (IS_ENABLED(CONFIG_SOC_NRF_FORCE_CONSTLAT)) {
 		nrf_power_task_trigger(NRF_POWER, NRF_POWER_TASK_CONSTLAT);
