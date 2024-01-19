@@ -13,6 +13,7 @@
  */
 
 #include <zephyr/kernel.h>
+#include <zephyr/devicetree.h>
 #include <zephyr/init.h>
 #include <cmsis_core.h>
 #include <soc/nrfx_coredep.h>
@@ -32,6 +33,8 @@
 
 LOG_MODULE_REGISTER(soc, CONFIG_SOC_LOG_LEVEL);
 
+#define LFXO_NODE DT_NODELABEL(lfxo)
+
 static int nordicsemi_nrf54l_init(void)
 {
 	/* Update the SystemCoreClock global variable with current core clock
@@ -46,7 +49,7 @@ static int nordicsemi_nrf54l_init(void)
 		nrf_glitchdet_enable_set(NRF_GLITCHDET, false);
 	}
 
-#if defined(CONFIG_SOC_LFXO_CAP_INTERNAL)
+#if DT_ENUM_HAS_VALUE(LFXO_NODE, load_capacitors, internal)
 	uint32_t xosc32ktrim = NRF_FICR->XOSC32KTRIM;
 
 	uint32_t offset_k =
@@ -64,8 +67,9 @@ static int nordicsemi_nrf54l_init(void)
 	 * where CAPACITANCE is the desired capacitor value in pF, holding any
 	 * value between 4 pF and 18 pF in 0.5 pF steps.
 	 */
-	uint32_t mid_val = ((CONFIG_SOC_LFXO_CAP_INT_VALUE_X2 - 8UL) * (uint32_t)(slope_k + 392)) +
-			   (offset_k << 4UL);
+	uint32_t mid_val =
+		(((DT_PROP(LFXO_NODE, load_capacitance_femtofarad) * 2UL) / 1000UL - 8UL) *
+		 (uint32_t)(slope_k + 392)) + (offset_k << 4UL);
 	uint32_t capvalue_k = mid_val >> 10UL;
 
 	/* Round. */
@@ -73,9 +77,9 @@ static int nordicsemi_nrf54l_init(void)
 		capvalue_k++;
 	}
 	nrf_oscillators_lfxo_cap_set(NRF_OSCILLATORS, (nrf_oscillators_lfxo_cap_t)capvalue_k);
-#elif defined(CONFIG_SOC_LFXO_CAP_EXTERNAL)
+#elif DT_ENUM_HAS_VALUE(LFXO_NODE, load_capacitors, external)
 	nrf_oscillators_lfxo_cap_set(NRF_OSCILLATORS, (nrf_oscillators_lfxo_cap_t)0);
-#endif /* CONFIG_SOC_LFXO_CAP_INTERNAL */
+#endif
 
 #if defined(CONFIG_SOC_HFXO_CAP_INTERNAL)
 	uint32_t xosc32mtrim = NRF_FICR->XOSC32MTRIM;
