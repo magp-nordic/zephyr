@@ -78,6 +78,11 @@
 	load-capacitance-femtofarad = <15500>;
 };
 
+&hfxo {
+	load-capacitors = "internal";
+	load-capacitance-femtofarad = <15000>;
+};
+
 &uart20 {
 	status = "okay";
 	current-speed = <115200>;
