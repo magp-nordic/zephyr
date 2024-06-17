@@ -24,6 +24,15 @@ nvic: &cpuapp_nvic {};
 		compatible = "simple-bus";
 		interrupt-parent = <&cpuapp_nvic>;
 		ranges;
+
+		egpio: gpio {
+			compatible = "nordic,nrfe-gpio";
+			gpio-controller;
+			#gpio-cells = < 0x2 >;
+			ngpios = < 0x10 >;
+			status = "okay";
+			port = < 0x2 >;
+		};
 	};
 
 	psa_rng: psa-rng {
