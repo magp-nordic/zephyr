@@ -77,4 +77,14 @@ config ELV_GRTC_LFXO_ALLOWED
 
 endif # NRF_GRTC_TIMER
 
+# eGPIO initialization depends on IPC initialization which is done at the same init level and
+# has init priority equal to 46.
+if GPIO
+
+config GPIO_INIT_PRIORITY
+	default 48 if GPIO_NRFE
+	default KERNEL_INIT_PRIORITY_DEFAULT
+
+endif # GPIO
+
 endif # SOC_SERIES_NRF54LX
